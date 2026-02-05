@@ -1,1 +1,0 @@
-# dc-tv-tierlist
