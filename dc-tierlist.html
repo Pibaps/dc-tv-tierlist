@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC TV Shows Tierlist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.5em;
+            margin: 50px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: #4ecdc4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .controls button {
+            background: #4ecdc4;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .controls button:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        #unranked-seasons {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 150px;
+        }
+
+        #unranked-seasons h2 {
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+
+        .seasons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .season-card {
+            position: relative;
+            cursor: grab;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: #2a2a3e;
+        }
+
+        .season-card:active {
+            cursor: grabbing;
+        }
+
+        .season-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .season-card.dragging {
+            opacity: 0.5;
+        }
+
+        .season-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+        }
+
+        .season-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .season-number {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: white;
+            text-shadow: 
+                -2px -2px 0 #000,
+                2px -2px 0 #000,
+                -2px 2px 0 #000,
+                2px 2px 0 #000,
+                0 0 10px rgba(0,0,0,0.8),
+                0 0 20px rgba(0,0,0,0.6);
+            line-height: 1;
+        }
+
+        .show-name {
+            font-size: 0.7em;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            padding: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            margin-top: 5px;
+        }
+
+        .tier-list {
+            margin-bottom: 20px;
+        }
+
+        .tier-row {
+            display: flex;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 140px;
+        }
+
+        .tier-label {
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            padding: 10px;
+        }
+
+        .tier-content {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            align-items: center;
+            min-height: 100px;
+        }
+
+        .tier-content.drag-over {
+            background: rgba(78, 205, 196, 0.2);
+        }
+
+        .tier-s .tier-label { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); }
+        .tier-a .tier-label { background: linear-gradient(135deg, #ffa726, #ff9800); }
+        .tier-b .tier-label { background: linear-gradient(135deg, #ffeb3b, #fdd835); color: #1a1a2e; }
+        .tier-c .tier-label { background: linear-gradient(135deg, #66bb6a, #4caf50); }
+        .tier-d .tier-label { background: linear-gradient(135deg, #42a5f5, #2196f3); }
+        .tier-f .tier-label { background: linear-gradient(135deg, #7e57c2, #673ab7); }
+
+        .tier-row .season-card {
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .seasons-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .tier-label {
+                min-width: 60px;
+                font-size: 2em;
+            }
+
+            .tier-row .season-card {
+                width: 80px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .tier-customization {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tier-customization h3 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .tier-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tier-item-label {
+            font-size: 1.2em;
+            font-weight: bold;
+            min-width: 40px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .tier-item input[type="text"] {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            min-width: 150px;
+        }
+
+        .tier-item input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tier-item-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tier-item-buttons button {
+            background: rgba(78, 205, 196, 0.7);
+            color: #1a1a2e;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .tier-item-buttons button:hover {
+            background: #4ecdc4;
+        }
+
+        .tier-item-buttons button.delete {
+            background: rgba(255, 107, 107, 0.7);
+        }
+
+        .tier-item-buttons button.delete:hover {
+            background: #ff6b6b;
+        }
+
+        .add-tier-btn {
+            background: #4ecdc4;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .add-tier-btn:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦸 DC TV Shows Tierlist 🦸</h1>
+        
+        <div class="controls">
+            <button onclick="toggleTierCustomization()">⚙️ Personnaliser le classement</button>
+            <button onclick="resetTierlist()">🔄 Réinitialiser</button>
+            <button onclick="exportTierlist()">💾 Exporter (JSON)</button>
+            <button onclick="exportImage()">📸 Exporter Image HD</button>
+            <button onclick="clearSave()">🗑️ Effacer sauvegarde</button>
+        </div>
+
+        <div id="tier-customization-section" class="tier-customization" style="display: none;">
+            <h3>⚙️ Personnaliser les lignes du classement</h3>
+            <div id="tiers-customization-container"></div>
+            <button class="add-tier-btn" onclick="addNewTier()">➕ Ajouter une ligne</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Chargement des séries DC TV...</p>
+        </div>
+
+        <div id="tierlist" class="tier-list" style="display: none;"></div>
+
+        <div id="unranked-seasons" style="display: none;">
+            <h2>📺 Saisons à classer</h2>
+            <div id="seasons-container" class="seasons-grid"></div>
+        </div>
+    </div>
+
+    <!-- html2canvas pour export d'image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // TMDB API Configuration
+        const TMDB_API_KEY = '39a4d237b150fc91ffb4b216a7812c9e'; // Instructions: Get free key at https://www.themoviedb.org/settings/api
+        const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+        
+        // Configuration localStorage
+        const STORAGE_KEY = 'dc_tierlist_save';
+        const TIERS_CONFIG_KEY = 'dc_tiers_config';
+
+        // Configuration par défaut des tiers
+        let tiersConfig = [
+            { id: 'tier-s', label: 'S', color: '#ff6b6b' },
+            { id: 'tier-a', label: 'A', color: '#ffa726' },
+            { id: 'tier-b', label: 'B', color: '#ffeb3b' },
+            { id: 'tier-c', label: 'C', color: '#66bb6a' },
+            { id: 'tier-d', label: 'D', color: '#42a5f5' },
+            { id: 'tier-f', label: 'F', color: '#7e57c2' }
+        ];
+        
+        // Fallback images pour séries avec images manquantes
+        const CUSTOM_POSTERS = {
+            // Smallville
+            '4544_1': 'https://static.wikia.nocookie.net/smallville/images/d/d2/Season_1_poster.png/revision/latest?cb=20160517104254&path-prefix=fr',
+            '4544_2': 'https://static.wikia.nocookie.net/smallville/images/1/11/SS2_-_Poster.jpg/revision/latest?cb=20190124211324&path-prefix=fr',
+            '4544_3': 'https://static.wikia.nocookie.net/smallville/images/e/e8/SS3_-_Poster.jpg/revision/latest?cb=20190920144010&path-prefix=fr',
+            '4544_4': 'https://m.media-amazon.com/images/I/915P5GDxuNL._AC_UF894,1000_QL80_.jpg',
+            '4544_5': 'https://static.wikia.nocookie.net/smallville/images/f/f3/SS5_-_Poster.jpg/revision/latest?cb=20190920145136&path-prefix=fr',
+            '4544_6': 'https://main.thgimages.com/?url=https://static.thcdn.com/productimg/0/600/600/60/10584860-1326372819-485216.jpg&format=webp&width=1500&height=1500&fit=cover',
+            '4544_7': 'https://m.media-amazon.com/images/I/81Rw2UufjhL._AC_UF894,1000_QL80_.jpg',
+            '4544_8': 'https://static.wikia.nocookie.net/smallville/images/6/66/SS8_-_Poster.jpg/revision/latest?cb=20190920145701&path-prefix=fr',
+            '4544_9': 'https://m.media-amazon.com/images/I/613aP3zxrSL._AC_UF894,1000_QL80_.jpg',
+            '4544_10': 'https://static.wikia.nocookie.net/smallville/images/1/17/SS10_-_Poster.jpg/revision/latest?cb=20190920151237&path-prefix=fr',
+            // Batman: The Brave and the Bold
+            '37776_1': 'https://m.media-amazon.com/images/I/81AT+tqCbsL._AC_UF894,1000_QL80_.jpg',
+            '37776_2': 'https://m.media-amazon.com/images/I/714qHAlVKjL._AC_UF1000,1000_QL80_.jpg',
+            '37776_3': 'https://m.media-amazon.com/images/I/61IuhJ2MWrL._AC_UF894,1000_QL80_.jpg',
+            // Birds of Prey
+            '1868_1': 'https://m.media-amazon.com/images/M/MV5BZDIyNTFlODYtYTY2YS00ZjJmLThkMmYtYjYyYjdmMDc4N2RhXkEyXkFqcGc@._V1_.jpg',
+            // Nouvelles séries
+            '2287_1': 'https://static.wikia.nocookie.net/marvel_dc/images/d/d0/Batman_1966_TV_Series_poster.png/revision/latest?cb=20210927131502',
+            '2287_2': 'https://m.media-amazon.com/images/I/913O7vbkrqL._AC_UF894,1000_QL80_.jpg',
+            '2287_3': 'https://i.ebayimg.com/images/g/In0AAOSwIjJZPD36/s-l400.png',
+            '31919_1': 'https://www.themoviedb.org/t/p/w600_and_h900_face/550hahC7sDSi3UEvBxCmrIDJrHD.jpg',
+        };
+
+        // Liste des séries DC TV (ID TMDB) - Triées de la plus récente à la plus ancienne
+        const DC_SHOWS = [
+            { id: 194764, name: 'The Penguin' },
+            { id: 110492, name: 'Peacemaker' },
+            { id: 95057, name: 'Superman & Lois' },
+            { id: 125474, name: 'Naomi' },
+            { id: 80986, name: 'Stargirl' },
+            { id: 79788, name: 'Watchmen' },
+            { id: 89247, name: 'Batwoman' },
+            { id: 92782, name: 'Pennyworth' },
+            { id: 93784, name: 'Swamp Thing' },
+            { id: 79501, name: 'Doom Patrol' },
+            { id: 75450, name: 'Titans' },
+            { id: 71340, name: 'Krypton' },
+            { id: 71663, name: 'Black Lightning' },
+            { id: 68001, name: 'Powerless' },
+            { id: 62643, name: 'Legends of Tomorrow' },
+            { id: 62688, name: 'Supergirl' },
+            { id: 60743, name: 'Constantine' },
+            { id: 60735, name: 'The Flash' },
+            { id: 60708, name: 'Gotham' },
+            { id: 1412, name: 'Arrow' },
+            { id: 18653, name: 'Human Target' },
+            { id: 1868, name: 'Birds of Prey' },
+            { id: 4544, name: 'Smallville' },
+            { id: 4515, name: 'Lois & Clark' },
+            { id: 31919, name: 'Human Target (1992)' },
+            { id: 236, name: 'The Flash (1990)' },
+            { id: 4545, name: 'Swamp Thing (1990)' },
+            { id: 4532, name: 'Superboy' },
+            { id: 4331, name: 'Wonder Woman' },
+            { id: 12072, name: 'The Secrets of Isis' },
+            { id: 10444, name: 'Shazam!' },
+            { id: 2287, name: 'Batman (1966)' },
+            { id: 12662, name: 'Adventures of Superman' },
+            { id: 195868, name: 'Gotham Knights' },
+            { id: 125928, name: 'My Adventures with Superman' },
+            { id: 219543, name: 'Creature Commandos' },
+            { id: 2022, name: 'The Batman' },
+            { id: 2098, name: 'Batman: The Animated Series' },
+            { id: 4303, name: 'Superman: The Animated Series' },
+            { id: 1618, name: 'Justice League' },
+            { id: 84200, name: 'Justice League Unlimited' },
+            { id: 604, name: 'Teen Titans' },
+            { id: 33217, name: 'Young Justice' },
+            { id: 37776, name: 'Batman: The Brave and the Bold' },
+            { id: 74440, name: 'Harley Quinn' },
+            { id: 63174, name: 'Lucifer' }
+        ];
+
+        let allSeasons = [];
+        let draggedElement = null;
+
+        // Initialiser la configuration des tiers
+        function initTiersConfig() {
+            const saved = localStorage.getItem(TIERS_CONFIG_KEY);
+            if (saved) {
+                try {
+                    tiersConfig = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Erreur lors du chargement de la config des tiers:', e);
+                }
+            }
+        }
+
+        // Générer le HTML du tierlist dynamiquement
+        function generateTierlistHTML() {
+            const tierlist = document.getElementById('tierlist');
+            tierlist.innerHTML = '';
+            
+            tiersConfig.forEach(tier => {
+                const tierRow = document.createElement('div');
+                tierRow.className = 'tier-row';
+                tierRow.style.borderLeft = `5px solid ${tier.color}`;
+                
+                const tierLabel = document.createElement('div');
+                tierLabel.className = 'tier-label';
+                tierLabel.textContent = tier.label;
+                tierLabel.style.background = `linear-gradient(135deg, ${tier.color}, ${tier.color}dd)`;
+                
+                const tierContent = document.createElement('div');
+                tierContent.className = 'tier-content';
+                tierContent.dataset.tier = tier.id;
+                
+                tierRow.appendChild(tierLabel);
+                tierRow.appendChild(tierContent);
+                tierlist.appendChild(tierRow);
+            });
+        }
+
+        // Rendre l'interface de customisation
+        function renderTierCustomization() {
+            const container = document.getElementById('tiers-customization-container');
+            container.innerHTML = '';
+            
+            tiersConfig.forEach((tier, index) => {
+                const tierItem = document.createElement('div');
+                tierItem.className = 'tier-item';
+                tierItem.innerHTML = `
+                    <input type="color" value="${tier.color}" onchange="updateTierColor(${index}, this.value)">
+                    <input type="text" value="${tier.label}" placeholder="Titre" onchange="updateTierLabel(${index}, this.value)">
+                    <div class="tier-item-buttons">
+                        ${index > 0 ? `<button onclick="moveTier(${index}, -1)">⬆️</button>` : ''}
+                        ${index < tiersConfig.length - 1 ? `<button onclick="moveTier(${index}, 1)">⬇️</button>` : ''}
+                        ${tiersConfig.length > 1 ? `<button class="delete" onclick="deleteTier(${index})">🗑️</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(tierItem);
+            });
+        }
+
+        // Basculer la section de customisation
+        function toggleTierCustomization() {
+            const section = document.getElementById('tier-customization-section');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            if (section.style.display === 'block') {
+                renderTierCustomization();
+            }
+        }
+
+        // Mettre à jour le label d'un tier
+        function updateTierLabel(index, label) {
+            tiersConfig[index].label = label || 'Nouveau tier';
+            saveTiersConfig();
+            generateTierlistHTML();
+            renderTierCustomization();
+        }
+
+        // Mettre à jour la couleur d'un tier
+        function updateTierColor(index, color) {
+            tiersConfig[index].color = color;
+            saveTiersConfig();
+            generateTierlistHTML();
+            renderTierCustomization();
+        }
+
+        // Supprimer un tier
+        function deleteTier(index) {
+            if (tiersConfig.length <= 1) {
+                alert('Vous devez avoir au moins une ligne dans le classement!');
+                return;
+            }
+            tiersConfig.splice(index, 1);
+            saveTiersConfig();
+            generateTierlistHTML();
+            renderTierCustomization();
+        }
+
+        // Déplacer un tier
+        function moveTier(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < tiersConfig.length) {
+                [tiersConfig[index], tiersConfig[newIndex]] = [tiersConfig[newIndex], tiersConfig[index]];
+                saveTiersConfig();
+                generateTierlistHTML();
+                renderTierCustomization();
+            }
+        }
+
+        // Ajouter un nouveau tier
+        function addNewTier() {
+            const id = `tier-${Date.now()}`;
+            const newTier = {
+                id: id,
+                label: 'Nouveau',
+                color: '#' + Math.floor(Math.random()*16777215).toString(16)
+            };
+            tiersConfig.push(newTier);
+            saveTiersConfig();
+            generateTierlistHTML();
+            renderTierCustomization();
+        }
+
+        // Sauvegarder la configuration des tiers
+        function saveTiersConfig() {
+            localStorage.setItem(TIERS_CONFIG_KEY, JSON.stringify(tiersConfig));
+        }
+
+        // Charger la configuration des tiers
+        function loadTiersConfig() {
+            const saved = localStorage.getItem(TIERS_CONFIG_KEY);
+            if (saved) {
+                try {
+                    tiersConfig = JSON.parse(saved);
+                    return true;
+                } catch (e) {
+                    console.error('Erreur lors du chargement de la config:', e);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // Fonction pour charger les données de toutes les séries
+        async function loadAllShows() {
+            const loading = document.getElementById('loading');
+            const unranked = document.getElementById('unranked-seasons');
+            const tierlist = document.getElementById('tierlist');
+            const container = document.getElementById('seasons-container');
+
+            try {
+                // Initialiser la configuration des tiers
+                loadTiersConfig();
+                
+                // Générer le tierlist
+                generateTierlistHTML();
+
+                // Charger toutes les séries en parallèle
+                const showPromises = DC_SHOWS.map(show => loadShowSeasons(show));
+                const results = await Promise.all(showPromises);
+                
+                // Aplatir tous les résultats et supprimer les doublons
+                const allSeasonsRaw = results.flat().filter(season => season !== null);
+                
+                // Créer un Map pour éviter les doublons (clé = showId-seasonNumber)
+                const seasonsMap = new Map();
+                allSeasonsRaw.forEach(season => {
+                    const key = `${season.showId}-${season.seasonNumber}`;
+                    if (!seasonsMap.has(key)) {
+                        seasonsMap.set(key, season);
+                    }
+                });
+                
+                allSeasons = Array.from(seasonsMap.values());
+                
+                // Afficher les saisons
+                allSeasons.forEach(season => {
+                    // Vérifier si la carte existe déjà
+                    const existingCard = container.querySelector(
+                        `[data-show-id="${season.showId}"][data-season-number="${season.seasonNumber}"]`
+                    );
+                    if (!existingCard) {
+                        const card = createSeasonCard(season);
+                        container.appendChild(card);
+                    }
+                });
+
+                // Masquer le loading et afficher le contenu
+                loading.style.display = 'none';
+                unranked.style.display = 'block';
+                tierlist.style.display = 'block';
+
+                // Initialiser le drag & drop
+                initDragAndDrop();
+
+                // Charger la sauvegarde si elle existe
+                const loaded = loadTierlist();
+                if (loaded) {
+                    // Réinitialiser le drag & drop pour les éléments chargés
+                    initDragAndDrop();
+                }
+
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                loading.innerHTML = '<p>⚠️ Erreur de chargement. Vérifiez votre clé API TMDB.</p><p style="font-size: 0.8em; margin-top: 10px;">Obtenez une clé gratuite sur <a href="https://www.themoviedb.org/settings/api" target="_blank" style="color: #4ecdc4;">themoviedb.org</a></p>';
+            }
+        }
+
+        // Charger les saisons d'une série
+        async function loadShowSeasons(show) {
+            try {
+                // Si pas de clé API, utiliser des données simulées
+                if (!TMDB_API_KEY || TMDB_API_KEY === 'YOUR_TMDB_API_KEY') {
+                    return generateMockSeasons(show);
+                }
+
+                const response = await fetch(
+                    `https://api.themoviedb.org/3/tv/${show.id}?api_key=${TMDB_API_KEY}&language=fr-FR`
+                );
+                
+                if (!response.ok) throw new Error('API Error');
+                
+                const data = await response.json();
+                
+                let seasons = data.seasons
+                    .filter(season => season.season_number > 0) // Exclure les "Specials"
+                    .map(season => ({
+                        showId: show.id,
+                        showName: show.name,
+                        seasonNumber: season.season_number,
+                        posterPath: season.poster_path,
+                        episodeCount: season.episode_count
+                    }));
+                
+                // Filtrer pour Birds of Prey (1 seule saison)
+                if (show.id === 1868) {
+                    seasons = seasons.filter(s => s.seasonNumber === 1);
+                }
+                
+                // Si TMDB ne retourne pas assez de saisons, utiliser les mocks
+                if (show.id === 4544 && seasons.length < 10) {
+                    console.log(`TMDB n'a retourné que ${seasons.length} saisons pour Smallville, utilisation des données mockées`);
+                    return generateMockSeasons(show);
+                }
+                
+                if (show.id === 37776 && seasons.length < 3) {
+                    console.log(`TMDB n'a retourné que ${seasons.length} saisons pour Batman: The Brave and the Bold, utilisation des données mockées`);
+                    return generateMockSeasons(show);
+                }
+                
+                if (show.id === 1618 && seasons.length < 2) {
+                    console.log(`TMDB n'a retourné que ${seasons.length} saisons pour Justice League, utilisation des données mockées`);
+                    return generateMockSeasons(show);
+                }
+                
+                return seasons;
+            } catch (error) {
+                console.error(`Erreur pour ${show.name}:`, error);
+                return generateMockSeasons(show);
+            }
+        }
+
+        // Générer des données simulées (pour démo sans API key)
+        function generateMockSeasons(show) {
+            const seasonCounts = {
+                1412: 8, // Arrow
+                60735: 9, // Flash
+                62688: 6, // Supergirl
+                62643: 7, // Legends
+                89247: 3, // Batwoman
+                71663: 4, // Black Lightning
+                95057: 4, // Superman & Lois
+                75450: 4, // Titans
+                79501: 4, // Doom Patrol
+                110492: 2, // Peacemaker
+                80986: 3, // Stargirl
+                60708: 5, // Gotham
+                63174: 6, // Lucifer
+                60743: 1, // Constantine
+                4544: 10, // Smallville
+                92782: 3, // Pennyworth
+                93784: 1, // Swamp Thing
+                2022: 1, // The Batman
+                2098: 1, // Batman: The Animated Series
+                4303: 3, // Superman: The Animated Series
+                1618: 2, // Justice League
+                84200: 3, // Justice League Unlimited
+                604: 5, // Teen Titans
+                33217: 4, // Young Justice
+                37776: 3, // Batman: The Brave and the Bold
+                74440: 5, // Harley Quinn
+                194764: 1, // The Penguin
+                4515: 4, // Lois & Clark
+                1868: 1, // Birds of Prey
+                18653: 2, // Human Target (2010)
+                219543: 1, // Creature Commandos
+                // Nouvelles séries ajoutées
+                2287: 3, // Batman (1966)
+                4331: 3, // Wonder Woman
+                4532: 4, // Superboy
+                236: 1, // The Flash (1990)
+                71340: 2, // Krypton
+                79788: 1, // Watchmen
+                68001: 1, // Powerless
+                125474: 1, // Naomi
+                195868: 1, // Gotham Knights
+                12662: 6, // Adventures of Superman
+                10444: 3, // Shazam!
+                12072: 2, // The Secrets of Isis
+                31919: 1, // Human Target (1992)
+                125928: 2, // My Adventures with Superman
+            };
+
+            const count = seasonCounts[show.id] || 3;
+            const seasons = [];
+            
+            for (let i = 1; i <= count; i++) {
+                seasons.push({
+                    showId: show.id,
+                    showName: show.name,
+                    seasonNumber: i,
+                    posterPath: null,
+                    episodeCount: 20
+                });
+            }
+            
+            return seasons;
+        }
+
+        // Créer une carte de saison
+        function createSeasonCard(season) {
+            const card = document.createElement('div');
+            card.className = 'season-card';
+            card.draggable = true;
+            card.dataset.showId = season.showId;
+            card.dataset.seasonNumber = season.seasonNumber;
+            card.dataset.showName = season.showName;
+
+            // Vérifier si on a un poster custom pour cette saison
+            const customKey = `${season.showId}_${season.seasonNumber}`;
+            let posterUrl;
+            
+            if (CUSTOM_POSTERS[customKey]) {
+                posterUrl = CUSTOM_POSTERS[customKey];
+            } else if (season.posterPath) {
+                posterUrl = `${TMDB_IMAGE_BASE}${season.posterPath}`;
+            } else {
+                posterUrl = `https://via.placeholder.com/300x450/2a2a3e/ffffff?text=${encodeURIComponent(season.showName + '\nS' + season.seasonNumber)}`;
+            }
+
+            const fallbackUrl = `https://via.placeholder.com/300x450/2a2a3e/ffffff?text=${encodeURIComponent(season.showName + '\\nS' + season.seasonNumber)}`;
+
+            card.innerHTML = `
+                <img class="season-poster" src="${posterUrl}" alt="${season.showName} Saison ${season.seasonNumber}" onerror="this.src='${fallbackUrl}'">
+                <div class="season-overlay">
+                    <div class="season-number">S${season.seasonNumber}</div>
+                    <div class="show-name">${season.showName}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Initialiser le drag & drop
+        function initDragAndDrop() {
+            const cards = document.querySelectorAll('.season-card');
+            const dropZones = document.querySelectorAll('.tier-content, #seasons-container');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            this.classList.remove('drag-over');
+
+            if (draggedElement) {
+                this.appendChild(draggedElement);
+                saveTierlist(); // Sauvegarder automatiquement
+            }
+
+            return false;
+        }
+
+        // Sauvegarder la tierlist dans localStorage
+        function saveTierlist() {
+            const data = {
+                tiers: {},
+                unranked: []
+            };
+
+            // Sauvegarder les tiers
+            const tierContents = document.querySelectorAll('.tier-content');
+            tierContents.forEach(content => {
+                const tier = content.dataset.tier;
+                const seasons = Array.from(content.querySelectorAll('.season-card')).map(card => ({
+                    showId: card.dataset.showId,
+                    showName: card.dataset.showName,
+                    seasonNumber: parseInt(card.dataset.seasonNumber)
+                }));
+                data.tiers[tier] = seasons;
+            });
+
+            // Sauvegarder les non classées
+            const unrankedContainer = document.getElementById('seasons-container');
+            data.unranked = Array.from(unrankedContainer.querySelectorAll('.season-card')).map(card => ({
+                showId: card.dataset.showId,
+                showName: card.dataset.showName,
+                seasonNumber: parseInt(card.dataset.seasonNumber)
+            }));
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // Charger la tierlist depuis localStorage
+        function loadTierlist() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return false;
+
+            try {
+                const data = JSON.parse(saved);
+                
+                // Charger les tiers
+                Object.entries(data.tiers).forEach(([tier, seasons]) => {
+                    const tierContent = document.querySelector(`.tier-content[data-tier="${tier}"]`);
+                    seasons.forEach(seasonData => {
+                        // Vérifier si la carte existe déjà
+                        const existingCard = tierContent.querySelector(
+                            `[data-show-id="${seasonData.showId}"][data-season-number="${seasonData.seasonNumber}"]`
+                        );
+                        if (!existingCard) {
+                            const season = allSeasons.find(s => 
+                                s.showId == seasonData.showId && s.seasonNumber == seasonData.seasonNumber
+                            );
+                            if (season) {
+                                const card = createSeasonCard(season);
+                                tierContent.appendChild(card);
+                            }
+                        }
+                    });
+                });
+
+                // Charger les non classées
+                const unrankedContainer = document.getElementById('seasons-container');
+                data.unranked.forEach(seasonData => {
+                    // Vérifier si la carte existe déjà
+                    const existingCard = unrankedContainer.querySelector(
+                        `[data-show-id="${seasonData.showId}"][data-season-number="${seasonData.seasonNumber}"]`
+                    );
+                    if (!existingCard) {
+                        const season = allSeasons.find(s => 
+                            s.showId == seasonData.showId && s.seasonNumber == seasonData.seasonNumber
+                        );
+                        if (season) {
+                            const card = createSeasonCard(season);
+                            unrankedContainer.appendChild(card);
+                        }
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                return false;
+            }
+        }
+
+        // Réinitialiser la tierlist
+        function resetTierlist() {
+            if (!confirm('Voulez-vous vraiment réinitialiser la tierlist ?')) {
+                return;
+            }
+
+            const container = document.getElementById('seasons-container');
+            const tierContents = document.querySelectorAll('.tier-content');
+
+            tierContents.forEach(tier => {
+                while (tier.firstChild) {
+                    container.appendChild(tier.firstChild);
+                }
+            });
+            
+            saveTierlist(); // Sauvegarder l'état réinitialisé
+        }
+
+        // Effacer la sauvegarde
+        function clearSave() {
+            if (!confirm('Voulez-vous effacer la sauvegarde et recharger ?')) {
+                return;
+            }
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        // Exporter la tierlist
+        function exportTierlist() {
+            const tiers = {};
+            const tierContents = document.querySelectorAll('.tier-content');
+
+            tierContents.forEach(content => {
+                const tier = content.dataset.tier;
+                const seasons = Array.from(content.querySelectorAll('.season-card')).map(card => ({
+                    show: card.dataset.showName,
+                    season: parseInt(card.dataset.seasonNumber)
+                }));
+                tiers[tier] = seasons;
+            });
+
+            const json = JSON.stringify(tiers, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dc-tv-tierlist-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Capture d'écran (nécessite une extension ou bibliothèque)
+        function shareImage() {
+            alert('Pour capturer votre tierlist:\n\n' +
+                  '1. Utilisez Win + Shift + S (Windows)\n' +
+                  '2. Ou F12 → Console → Tapez: screenshot()\n' +
+                  '3. Ou installez une extension de capture d\'écran');
+        }
+
+        // Exporter en image haute résolution
+        async function exportImage() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '⏳ Génération...';
+
+            try {
+                // Masquer temporairement les contrôles et les saisons non classées
+                const controls = document.querySelector('.controls');
+                const unranked = document.getElementById('unranked-seasons');
+                const originalControlsDisplay = controls.style.display;
+                const originalUnrankedDisplay = unranked.style.display;
+                
+                controls.style.display = 'none';
+                unranked.style.display = 'none';
+
+                // Attendre un peu pour que le DOM se mette à jour
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Capturer avec html2canvas
+                const tierlist = document.getElementById('tierlist');
+                const canvas = await html2canvas(tierlist, {
+                    scale: 3, // Haute résolution (3x)
+                    backgroundColor: '#1a1a2e',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    imageTimeout: 0,
+                    onclone: (clonedDoc) => {
+                        // Améliorer le rendu du titre
+                        const title = clonedDoc.querySelector('h1');
+                        if (title) {
+                            title.style.marginBottom = '20px';
+                        }
+                    }
+                });
+
+                // Restaurer l'affichage
+                controls.style.display = originalControlsDisplay;
+                unranked.style.display = originalUnrankedDisplay;
+
+                // Convertir en blob et télécharger
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `dc-tierlist-${Date.now()}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    button.disabled = false;
+                    button.textContent = '📸 Exporter Image HD';
+                }, 'image/png', 1.0);
+
+            } catch (error) {
+                console.error('Erreur lors de l\'export:', error);
+                alert('Erreur lors de l\'export de l\'image. Utilisez Win + Shift + S pour une capture d\'écran manuelle.');
+                button.disabled = false;
+                button.textContent = '📸 Exporter Image HD';
+            }
+        }
+
+        // Charger les données au démarrage
+        loadAllShows();
+    </script>
+</body>
+</html>
